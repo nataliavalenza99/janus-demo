@@ -9,7 +9,7 @@ Versione per la dimostrazione di lunedì 23 novembre 2026.
 - Form: https://nataliavalenza99.github.io/janus-demo/
 - Gestionale: https://nataliavalenza99.github.io/janus-demo/gestionale-d.html
 
-I collegamenti funzionano dopo aver abilitato GitHub Pages da Settings > Pages, pubblicazione dal branch main e cartella /(root).
+Sito pubblico attivo su GitHub Pages, branch main e cartella /(root). Verificato il 18 novembre: 19 controlli superati, incluso invio di una richiesta inventata, ricevuta, ricerca combinata, accessi per ruolo e visualizzazione mobile.
 
 Quattro reparti operativi nella demo: Commerciale, Segreteria, Didattica, Admin. I flussi completi e gli altri moduli appartengono alle fasi successive. La ricevuta conferma il salvataggio della richiesta, non l’approvazione dell’iscrizione.
 
