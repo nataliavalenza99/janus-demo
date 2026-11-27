@@ -1,5 +1,6 @@
 import {api,view,openDetail} from './app.js';
 import {PACKAGES,STUDY_TRACKS,studyTrackLabel,packageLabel} from './domain.js';
+import {animateDemoCount,beginDepartmentOverview,renderDepartmentOverview,clearDepartmentOverview,failDepartmentOverview} from './demo-overview.js';
 const $=s=>document.querySelector(s);
 const departments={
  commerciale:{number:'01',title:'Commerciale',subtitle:'Il portafoglio delle richieste e le preferenze degli studenti.',color:'coral',tasks:[['queue','Apri le richieste','Consulta il portafoglio consentito al tuo account.'],['catalog','Offerte e percorsi','I quattro pacchetti e i dodici indirizzi di studio.']]},
@@ -11,13 +12,14 @@ let active=null,identity=null,generation=0,summaryGeneration=0,offset=0,lastActi
 function node(tag,className,text){const e=document.createElement(tag);if(className)e.className=className;if(text!==undefined)e.textContent=text;return e;}
 function message(text){$('#department-error').textContent=text;}
 function metrics(data){
- const values=active==='admin'?[['Richieste visibili',data.total],['Account operativi',data.staff_accounts],['Eventi registrati',data.audit_events],['Titoli da verificare',data.guardians_pending]]:active==='segreteria'?[['Richieste ricevute',data.total],['Studenti minorenni',data.minors],['Titoli da verificare',data.guardians_pending],['Pacchetto indicato',data.with_package]]:active==='didattica'?[['Studenti assegnati',data.total],['Studenti minorenni',data.minors],['Pacchetto indicato',data.with_package],['Invii dal form',data.from_form]]:[['Richieste visibili',data.total],['Invii dal form',data.from_form],['Pacchetto indicato',data.with_package],['Studenti minorenni',data.minors]];
- $('#department-metrics').replaceChildren();for(const [label,value]of values){const box=node('div','department-metric');box.append(node('span','',label),node('strong','',String(value??'—')));$('#department-metrics').append(box);}
+ const values=active==='admin'?[['Richieste visibili',data.total],['Account registrati',data.staff_accounts],['Eventi registrati',data.audit_events],['Titoli da verificare',data.guardians_pending]]:active==='segreteria'?[['Richieste ricevute',data.total],['Studenti minorenni',data.minors],['Titoli da verificare',data.guardians_pending],['Pacchetto indicato',data.with_package]]:active==='didattica'?[['Studenti assegnati',data.total],['Studenti minorenni',data.minors],['Pacchetto indicato',data.with_package],['Invii dal form',data.from_form]]:[['Richieste visibili',data.total],['Invii dal form',data.from_form],['Pacchetto indicato',data.with_package],['Studenti minorenni',data.minors]];
+ $('#department-metrics').replaceChildren();for(const [label,value]of values){const box=node('div','department-metric'),number=node('strong');box.append(node('span','',label),number);$('#department-metrics').append(box);if(document.body.classList.contains('concept-d'))animateDemoCount(number,value);else number.textContent=String(value??'—');}
 }
 async function selectDepartment(key){
  const spec=departments[key];if(!spec||!identity)return;
  const ticket=++summaryGeneration;++generation;active=key;offset=0;lastAction=null;
  view('department-view');$('#workspace-title').textContent=spec.title;
+ beginDepartmentOverview(()=>selectDepartment(key));
  $('#department-view').dataset.department=key;$('#department-number').textContent=spec.number;
  $('#department-title').textContent=spec.title;$('#department-description').textContent=spec.subtitle;
  $('#department-scope').textContent='Verifica del perimetro…';message('');
@@ -25,8 +27,9 @@ async function selectDepartment(key){
  $('#department-output').hidden=true;$('#department-metrics').replaceChildren();$('#department-tasks').replaceChildren();
  for(const [action,title,description]of spec.tasks){const button=node('button','department-task');button.type='button';button.append(node('strong','',title),node('span','',description),node('b','task-arrow','↗'));button.onclick=()=>runAction(action);$('#department-tasks').append(button);}
  const search=node('button','department-task');search.type='button';search.append(node('strong','','Ricerca libera'),node('span','','Nome, email, regione, età, anno, indirizzo e pacchetto.'),node('b','task-arrow','↗'));search.onclick=()=>view('search-view');$('#department-tasks').append(search);
- try{const summary=await api.department(key);if(ticket!==summaryGeneration)return;metrics(summary);$('#department-scope').textContent=summary.scope;}
- catch(error){if(ticket===summaryGeneration){message(error.message);$('#department-scope').textContent='Accesso al reparto non disponibile.';}}
+ try{const summary=await api.department(key);if(ticket!==summaryGeneration)return;metrics(summary);$('#department-scope').textContent=summary.scope;void renderDepartmentOverview(key,summary,api,action=>runAction(action));}
+ catch(error){if(ticket===summaryGeneration){message(error.message);failDepartmentOverview(error.message);$('#department-scope').textContent='Accesso al reparto non disponibile.';}}
+ if(ticket!==summaryGeneration)return;
  $('#department-limit').textContent=key==='commerciale'?'Operativo nella demo: ricezione, consultazione, inserimento e cataloghi. Trattative, approvazioni commerciali e inviti personalizzati restano nelle fasi successive.':key==='segreteria'?'Operativo nella demo: richieste, dettagli del genitore/tutore e coda dei titoli dichiarati. Approvazione documentale e passaggio alla Didattica non sono ancora eseguiti da questa demo.':key==='didattica'?'Operativo nella demo: consultazione degli studenti assegnati e cataloghi. Piani didattici, assegnazione tutor e lezioni restano nelle fasi successive.':'Operativo nella demo: lettura trasversale, account/ruoli e audit degli inserimenti. Non sono presenti modifiche dei ruoli o approvazioni sostitutive.';
 }
 function table(headers,rows,formatter){
@@ -60,6 +63,6 @@ document.addEventListener('janus:authenticated',event=>{
  for(const key of allowed){if(!departments[key])continue;const spec=departments[key],button=node('button','department-tab');button.type='button';button.dataset.department=key;button.append(node('span','',spec.number),node('strong','',spec.title));button.onclick=()=>selectDepartment(key);$('#department-nav').append(button);}
  selectDepartment(identity.role==='admin'?'admin':identity.role);
 });
-document.addEventListener('janus:view',event=>{if(event.detail.name!=='department-view'){++generation;++summaryGeneration;for(const button of document.querySelectorAll('button[data-department]'))button.setAttribute('aria-pressed','false');}});
-document.addEventListener('janus:signed-out',()=>{++generation;++summaryGeneration;identity=null;active=null;$('#department-nav').replaceChildren();$('#department-metrics').replaceChildren();$('#department-content').replaceChildren();$('#department-error').textContent='';});
+document.addEventListener('janus:view',event=>{if(event.detail.name!=='department-view'){++generation;++summaryGeneration;clearDepartmentOverview();for(const button of document.querySelectorAll('button[data-department]'))button.setAttribute('aria-pressed','false');}});
+document.addEventListener('janus:signed-out',()=>{++generation;++summaryGeneration;clearDepartmentOverview();identity=null;active=null;$('#department-nav').replaceChildren();$('#department-metrics').replaceChildren();$('#department-content').replaceChildren();$('#department-error').textContent='';});
 $('#department-previous').onclick=()=>runAction(lastAction,Math.max(0,offset-1));$('#department-next').onclick=()=>runAction(lastAction,offset+1);

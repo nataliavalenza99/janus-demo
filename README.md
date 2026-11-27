@@ -14,3 +14,14 @@ Sito pubblico attivo su GitHub Pages, branch main e cartella /(root). Verificato
 Quattro reparti operativi nella demo: Commerciale, Segreteria, Didattica, Admin. I flussi completi e gli altri moduli appartengono alle fasi successive. La ricevuta conferma il salvataggio della richiesta, non l’approvazione dell’iscrizione.
 
 La fotografia è un’immagine illustrativa generata. Il logo è il marchio ufficiale fornito da Janus.
+
+## Aggiornamento del 27 novembre 2026
+
+Le quattro aree della demo mantengono la grafica esistente e aggiungono contatori animati, percentuali e grafici basati sui dati autorizzati del reparto:
+
+- Commerciale: provenienza delle richieste e preferenze sui pacchetti.
+- Segreteria: maggiorenni/minorenni e dichiarazioni genitore/tutore da verificare.
+- Didattica: indirizzi e pacchetti delle sole schede assegnate.
+- Admin: account attivi per ruolo e ultimi inserimenti registrati.
+
+Le azioni rapide aprono le funzioni gia disponibili. Il form, il database e i permessi non sono stati modificati. Gli elenchi anagrafici si aprono su richiesta; i contatori non attestano approvazioni o iscrizioni effettive. La demo resta separata dal progetto integrale.
